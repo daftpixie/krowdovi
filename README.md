@@ -1,4 +1,4 @@
-# Wayfind MVP
+# Krowdovi MVP
 
 **Indoor Navigation DePIN Platform**
 
@@ -10,7 +10,7 @@ Blockchain-powered platform paying videographers to create first-person navigati
 
 ## 🎯 Overview
 
-Wayfind applies Hivemapper's successful burn-and-mint tokenomics to the $7B indoor navigation market. Users burn tokens for navigation credits while creators earn from the remint pool based on their content's usage and reputation.
+Krowdovi applies burn-and-mint tokenomics to the $7B indoor navigation market. Users burn tokens for navigation credits while creators earn from the remint pool based on their content's usage and reputation.
 
 ### Key Features
 
@@ -56,8 +56,8 @@ wayfind-mvp/
 
 ```bash
 # Clone repository
-git clone https://github.com/wayfind/wayfind-mvp.git
-cd wayfind-mvp
+git clone [https://github.com/daftpixie/krowdovi]
+cd krowdovi
 
 # Install dependencies
 pnpm install
