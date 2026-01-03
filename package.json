@@ -1,0 +1,41 @@
+{
+  "name": "wayfind-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Indoor Navigation DePIN MVP - Video-based wayfinding with blockchain rewards",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/24hrmvp/wayfind-mvp"
+  },
+  "author": "24HRMVP <build@24hrmvp.xyz>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "pnpm --filter @wayfind/web dev",
+    "dev:api": "pnpm --filter @wayfind/api dev",
+    "dev:all": "concurrently \"pnpm dev\" \"pnpm dev:api\"",
+    "build": "pnpm --filter @wayfind/web build",
+    "build:api": "pnpm --filter @wayfind/api build",
+    "build:contracts": "pnpm --filter @wayfind/contracts build",
+    "build:all": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @wayfind/api prisma:generate",
+    "db:migrate": "pnpm --filter @wayfind/api prisma:migrate",
+    "db:push": "pnpm --filter @wayfind/api prisma:push",
+    "db:studio": "pnpm --filter @wayfind/api prisma:studio",
+    "contracts:build": "cd packages/contracts && anchor build",
+    "contracts:test": "cd packages/contracts && anchor test",
+    "contracts:deploy": "cd packages/contracts && anchor deploy --provider.cluster devnet",
+    "clean": "pnpm -r clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

@@ -1,0 +1,259 @@
+# ============================================
+# WAYFIND MVP - GITIGNORE
+# Monorepo: Next.js + Express + Solana/Anchor
+# ============================================
+
+# ============================================
+# DEPENDENCIES
+# ============================================
+node_modules/
+.pnpm-store/
+.yarn/
+.npm/
+
+# ============================================
+# ENVIRONMENT FILES (CRITICAL - NEVER COMMIT)
+# ============================================
+.env
+.env.*
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+!.env.example
+!.env.sample
+
+# ============================================
+# BUILD OUTPUTS
+# ============================================
+# Next.js
+.next/
+out/
+.vercel/
+
+# TypeScript
+dist/
+build/
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Prisma
+app/api/prisma/migrations/*_migration.sql
+
+# ============================================
+# CACHES
+# ============================================
+.cache/
+*.cache
+.turbo/
+.swc/
+.eslintcache
+.stylelintcache
+*.lcov
+
+# pnpm
+.pnpm-debug.log*
+
+# ============================================
+# SOLANA / ANCHOR (RUST)
+# ============================================
+# Anchor build outputs
+app/contracts/target/
+target/
+
+# Anchor keypairs (NEVER COMMIT PRIVATE KEYS)
+app/contracts/keypairs/
+*.json
+!package.json
+!tsconfig.json
+!turbo.json
+!pnpm-workspace.yaml
+!app/*/package.json
+!app/contracts/Anchor.toml
+!app/contracts/programs/*/Cargo.toml
+
+# Rust
+**/*.rs.bk
+Cargo.lock
+
+# Solana test validator
+test-ledger/
+.anchor/
+
+# ============================================
+# LOGS
+# ============================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ============================================
+# TESTING
+# ============================================
+coverage/
+.nyc_output/
+*.lcov
+junit.xml
+
+# ============================================
+# IDE & EDITORS
+# ============================================
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains (WebStorm, IntelliJ)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.#*
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# ============================================
+# OPERATING SYSTEM
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ============================================
+# UPLOADS & USER DATA
+# ============================================
+uploads/
+temp/
+tmp/
+*.tmp
+*.temp
+
+# ============================================
+# SECRETS & CREDENTIALS
+# ============================================
+*.pem
+*.key
+*.cert
+*.crt
+*_rsa
+*_rsa.pub
+*_dsa
+*_dsa.pub
+*_ecdsa
+*_ecdsa.pub
+*_ed25519
+*_ed25519.pub
+secrets/
+credentials/
+
+# Wallet keypairs (CRITICAL)
+*.keypair
+id.json
+deploy-keypair.json
+wallet.json
+
+# ============================================
+# DATABASE
+# ============================================
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+!app/api/prisma/schema.prisma
+!app/api/prisma/seed.ts
+
+# ============================================
+# MISC
+# ============================================
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Package manager locks (keep pnpm-lock.yaml)
+package-lock.json
+yarn.lock
+
+# Sentry
+.sentryclirc
+
+# Vercel
+.vercel/
+
+# Railway
+.railway/
+
+# Docker (if used)
+docker-compose.override.yml
+
+# ============================================
+# PROJECT SPECIFIC
+# ============================================
+# Context files (large, auto-generated)
+CONTEXT.md
+*_CONTEXT.md
+
+# Documentation builds
+docs/_build/
+
+# Local dev scripts
+scripts/local/
+*.local.sh
+*.local.ps1
+
+# Test fixtures with sensitive data
+__fixtures__/
+__mocks__/secret*
+
+# Performance profiling
+*.cpuprofile
+*.heapprofile
+*.heapsnapshot

@@ -1,0 +1,587 @@
+// ============================================
+// WAYFIND MVP - PRISMA SCHEMA
+// Indoor Navigation DePIN Platform
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id              String    @id @default(cuid())
+  walletAddress   String    @unique
+  email           String?   @unique
+  username        String?   @unique
+  displayName     String?
+  avatarUrl       String?
+  role            UserRole  @default(USER)
+  preferredLang   String    @default("en")
+  
+  // Creator-specific fields
+  bio             String?
+  website         String?
+  twitterUrl      String?
+  farcasterUrl    String?
+  isVerified      Boolean   @default(false)
+  payoutAddress   String?
+  
+  // Relationships
+  videos          Video[]
+  sessions        NavigationSession[]
+  ratings         VideoRating[]
+  venueAdmin      VenueAdmin[]
+  rewards         CreatorReward[]
+  burnEvents      BurnEvent[]
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastActiveAt    DateTime?
+  
+  @@index([walletAddress])
+  @@index([email])
+}
+
+enum UserRole {
+  USER
+  CREATOR
+  VENUE_ADMIN
+  PLATFORM_ADMIN
+}
+
+// ============================================
+// CREATOR REPUTATION
+// ============================================
+
+model CreatorReputation {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  
+  // Reputation scores (0-100)
+  overall         Float     @default(50)
+  freshness       Float     @default(50)
+  completionRate  Float     @default(50)
+  userRating      Float     @default(50)
+  accessibility   Float     @default(50)
+  noBounce        Float     @default(50)
+  
+  // Tier based on overall score
+  tier            CreatorTier @default(SILVER)
+  multiplier      Float     @default(1.0)
+  
+  // Stats
+  totalEarnings   Float     @default(0)
+  pendingEarnings Float     @default(0)
+  
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([tier])
+  @@index([overall])
+}
+
+enum CreatorTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
+}
+
+// ============================================
+// VENUES
+// ============================================
+
+model Venue {
+  id              String      @id @default(cuid())
+  name            String
+  type            VenueType
+  description     String?
+  
+  // Location
+  address         String
+  city            String
+  state           String?
+  country         String
+  postalCode      String?
+  latitude        Float
+  longitude       Float
+  timezone        String      @default("UTC")
+  
+  // Media
+  logoUrl         String?
+  imageUrl        String?
+  website         String?
+  
+  // Structure
+  floors          String[]    @default([])
+  buildings       String[]    @default([])
+  
+  // Stats
+  totalRoutes     Int         @default(0)
+  totalVideos     Int         @default(0)
+  avgRating       Float       @default(0)
+  
+  // Bounty system
+  bountyActive    Boolean     @default(false)
+  bountyAmount    Float?
+  bountyRoutes    String[]    @default([])
+  
+  isVerified      Boolean     @default(false)
+  
+  // Relationships
+  routes          Route[]
+  videos          Video[]
+  admins          VenueAdmin[]
+  nfcTags         NfcTag[]
+  qrCodes         QrCode[]
+  sessions        NavigationSession[]
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([type])
+  @@index([city, country])
+  @@index([bountyActive])
+}
+
+enum VenueType {
+  HOSPITAL
+  AIRPORT
+  MALL
+  UNIVERSITY
+  HOTEL
+  TRANSIT
+  CORPORATE
+  MUSEUM
+  STADIUM
+  CONVENTION
+  OTHER
+}
+
+model VenueAdmin {
+  id        String   @id @default(cuid())
+  userId    String
+  venueId   String
+  role      String   @default("admin")
+  
+  user      User     @relation(fields: [userId], references: [id])
+  venue     Venue    @relation(fields: [venueId], references: [id])
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, venueId])
+}
+
+// ============================================
+// ROUTES
+// ============================================
+
+model Route {
+  id              String    @id @default(cuid())
+  venueId         String
+  name            String
+  description     String?
+  
+  // Navigation details
+  startLocation   String
+  endLocation     String
+  floor           String?
+  building        String?
+  estimatedTime   Int       // seconds
+  distance        Float     // meters
+  difficulty      Difficulty @default(EASY)
+  
+  // Accessibility
+  wheelchairOk    Boolean   @default(false)
+  hasElevator     Boolean   @default(false)
+  hasStairs       Boolean   @default(false)
+  hasRamps        Boolean   @default(false)
+  audioGuidance   Boolean   @default(true)
+  hapticFeedback  Boolean   @default(true)
+  
+  tags            String[]  @default([])
+  
+  // Relationships
+  venue           Venue     @relation(fields: [venueId], references: [id])
+  videos          Video[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([venueId])
+  @@index([difficulty])
+}
+
+enum Difficulty {
+  EASY
+  MODERATE
+  CHALLENGING
+}
+
+// ============================================
+// VIDEOS
+// ============================================
+
+model Video {
+  id              String      @id @default(cuid())
+  routeId         String
+  creatorId       String
+  venueId         String
+  
+  status          VideoStatus @default(DRAFT)
+  
+  // Video metadata
+  title           String
+  description     String?
+  duration        Float       // seconds
+  width           Int
+  height          Int
+  fps             Int         @default(30)
+  fileSize        Int         // bytes
+  
+  // URLs
+  originalUrl     String?
+  hlsUrl          String?
+  dashUrl         String?
+  thumbnailUrl    String?
+  posterUrl       String?
+  
+  // Cloudflare Stream
+  cfStreamId      String?     @unique
+  cfPlaybackId    String?
+  
+  // Stats
+  views           Int         @default(0)
+  completions     Int         @default(0)
+  avgCompletion   Float       @default(0)
+  avgRating       Float       @default(0)
+  totalRatings    Int         @default(0)
+  weeklyViews     Int         @default(0)
+  monthlyViews    Int         @default(0)
+  
+  // Relationships
+  route           Route       @relation(fields: [routeId], references: [id])
+  creator         User        @relation(fields: [creatorId], references: [id])
+  venue           Venue       @relation(fields: [venueId], references: [id])
+  overlays        Overlay[]
+  ratings         VideoRating[]
+  sessions        NavigationSession[]
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  publishedAt     DateTime?
+  
+  @@index([status])
+  @@index([venueId])
+  @@index([creatorId])
+  @@index([routeId])
+  @@index([avgRating])
+}
+
+enum VideoStatus {
+  DRAFT
+  PROCESSING
+  PUBLISHED
+  ARCHIVED
+  REJECTED
+}
+
+// ============================================
+// OVERLAYS
+// ============================================
+
+model Overlay {
+  id              String      @id @default(cuid())
+  videoId         String
+  type            OverlayType
+  
+  // Positioning
+  posX            Float       // 0-100 percentage
+  posY            Float       // 0-100 percentage
+  scale           Float       @default(1)
+  rotation        Float       @default(0)
+  
+  // Timing
+  startTime       Float       // seconds
+  endTime         Float       // seconds
+  fadeIn          Int         @default(200) // ms
+  fadeOut         Int         @default(200) // ms
+  
+  // Content (JSON for flexibility)
+  content         Json        // TranslatedText or other content
+  
+  // Arrow-specific
+  direction       String?     // ArrowDirection
+  distance        Float?      // meters
+  
+  // Ad-specific
+  adId            String?
+  advertiserName  String?
+  imageUrl        String?
+  ctaUrl          String?
+  skippable       Boolean     @default(true)
+  skipAfter       Int?        // seconds
+  
+  // Styling (JSON)
+  style           Json?
+  
+  // Accessibility
+  haptic          String?     // HapticPattern
+  ttsContent      Json?       // TranslatedText for TTS
+  ariaLabel       Json?       // TranslatedText
+  
+  // Relationships
+  video           Video       @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([videoId])
+  @@index([type])
+  @@index([startTime])
+}
+
+enum OverlayType {
+  ARROW
+  TEXT
+  AD
+  LANDMARK
+  WARNING
+  DESTINATION
+}
+
+// ============================================
+// NFC & QR CODES
+// ============================================
+
+model NfcTag {
+  id              String    @id @default(cuid())
+  venueId         String
+  location        String
+  floor           String?
+  routeIds        String[]  @default([])
+  url             String
+  
+  scanCount       Int       @default(0)
+  lastScanned     DateTime?
+  
+  venue           Venue     @relation(fields: [venueId], references: [id])
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([venueId])
+}
+
+model QrCode {
+  id              String    @id @default(cuid())
+  venueId         String
+  location        String
+  routeIds        String[]  @default([])
+  url             String
+  imageUrl        String
+  
+  scanCount       Int       @default(0)
+  
+  venue           Venue     @relation(fields: [venueId], references: [id])
+  
+  createdAt       DateTime  @default(now())
+  
+  @@index([venueId])
+}
+
+// ============================================
+// NAVIGATION SESSIONS & ANALYTICS
+// ============================================
+
+model NavigationSession {
+  id                  String    @id @default(cuid())
+  userId              String?
+  videoId             String
+  venueId             String
+  
+  accessMethod        AccessMethod
+  
+  // Session data
+  startedAt           DateTime  @default(now())
+  endedAt             DateTime?
+  completed           Boolean   @default(false)
+  completionPercent   Float     @default(0)
+  
+  // Device info
+  platform            String    // ios, android, web
+  browser             String?
+  appVersion          String?
+  osVersion           String?
+  deviceModel         String?
+  screenWidth         Int?
+  screenHeight        Int?
+  hasMotion           Boolean   @default(false)
+  hasHaptics          Boolean   @default(false)
+  hasTts              Boolean   @default(false)
+  
+  // Relationships
+  user                User?     @relation(fields: [userId], references: [id])
+  video               Video     @relation(fields: [videoId], references: [id])
+  venue               Venue     @relation(fields: [venueId], references: [id])
+  
+  @@index([videoId])
+  @@index([venueId])
+  @@index([startedAt])
+  @@index([accessMethod])
+}
+
+enum AccessMethod {
+  NFC
+  QR
+  LINK
+  APP
+}
+
+model VideoRating {
+  id              String    @id @default(cuid())
+  videoId         String
+  userId          String
+  
+  rating          Int       // 1-5
+  feedback        String?
+  
+  video           Video     @relation(fields: [videoId], references: [id])
+  user            User      @relation(fields: [userId], references: [id])
+  
+  createdAt       DateTime  @default(now())
+  
+  @@unique([videoId, userId])
+  @@index([videoId])
+  @@index([rating])
+}
+
+// ============================================
+// TOKENOMICS
+// ============================================
+
+model BurnEvent {
+  id                  String    @id @default(cuid())
+  txSignature         String    @unique
+  walletAddress       String
+  userId              String?
+  
+  amount              BigInt    // Total amount paid
+  creditsPurchased    Int
+  burnedAmount        BigInt    // 75% burned
+  remintPoolAmount    BigInt    // 25% to pool
+  
+  user                User?     @relation(fields: [userId], references: [id])
+  
+  createdAt           DateTime  @default(now())
+  
+  @@index([walletAddress])
+  @@index([createdAt])
+}
+
+model RewardEpoch {
+  id                  String          @id @default(cuid())
+  epochNumber         Int             @unique
+  weekStarting        DateTime
+  weekEnding          DateTime
+  
+  totalBurned         BigInt
+  totalReminted       BigInt
+  recipientCount      Int
+  
+  status              EpochStatus     @default(PENDING)
+  txSignature         String?
+  
+  rewards             CreatorReward[]
+  
+  processedAt         DateTime?
+  createdAt           DateTime        @default(now())
+  
+  @@index([epochNumber])
+  @@index([status])
+}
+
+enum EpochStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model CreatorReward {
+  id                  String        @id @default(cuid())
+  epochId             String
+  creatorId           String
+  walletAddress       String
+  
+  reputationScore     Float
+  tierMultiplier      Float
+  viewsThisWeek       Int
+  
+  baseReward          BigInt
+  finalReward         BigInt
+  
+  txSignature         String?
+  claimed             Boolean       @default(false)
+  claimedAt           DateTime?
+  
+  epoch               RewardEpoch   @relation(fields: [epochId], references: [id])
+  creator             User          @relation(fields: [creatorId], references: [id])
+  
+  createdAt           DateTime      @default(now())
+  
+  @@unique([epochId, creatorId])
+  @@index([creatorId])
+  @@index([claimed])
+}
+
+// ============================================
+// ADVERTISEMENTS
+// ============================================
+
+model Advertisement {
+  id                  String    @id @default(cuid())
+  advertiserId        String
+  name                String
+  
+  // Content
+  content             Json      // TranslatedText
+  imageUrl            String?
+  ctaText             Json?     // TranslatedText
+  ctaUrl              String?
+  
+  // Targeting
+  venueTypes          VenueType[]
+  venueIds            String[]
+  
+  // Budget
+  dailyBudget         Float
+  totalBudget         Float
+  costPerImpression   Float
+  costPerClick        Float
+  
+  // Stats
+  impressions         Int       @default(0)
+  clicks              Int       @default(0)
+  spent               Float     @default(0)
+  
+  isActive            Boolean   @default(true)
+  
+  startDate           DateTime
+  endDate             DateTime?
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  @@index([isActive])
+  @@index([venueTypes])
+}
